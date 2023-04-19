@@ -1,27 +1,17 @@
-AWSTemplateFormatVersion: '2023-04-18'
-Description: Storage stack for Stack test
-
 Resources:
-  S3Bucket:
-    Type: 'AWS::S3::Bucket' 
+  MyBucket:
+    Type: AWS::S3::Bucket
     Properties:
       BucketName: "STD21090"
-    Arn: 
-  STD21090SSM:
-    Type: 'AWS::SSM::Parameter'
+  MyBucketNameParam:
+    Type: "AWS::SSM::Parameter"
     Properties:
-      Type: 'String'
-      Name: '/STD21090'
-      Value: !Ref 'S3Bucket'
-      Description: 'Name of the S3 bucket'
-
-  STD21090ArnSSM:
-    Type: 'AWS::SSM::Parameter'
+      Type: "String"
+      Name: "/my-bucket/name"
+      Value: !Ref MyBucket
+  MyBucketArnParam:
+    Type: "AWS::SSM::Parameter"
     Properties:
-      Type: 'String'
-      Name: '/S3Bucket-arn'
-      Value: !GetAtt 'S3Bucket.Arn'
-      Description: 'ARN of the S3 bucket'
-
-
-
+      Type: "String"
+      Name: "/my-bucket/arn"
+      Value: !GetAtt MyBucket.Arn
