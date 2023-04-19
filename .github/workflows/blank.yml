@@ -1,0 +1,34 @@
+name: CD storage
+
+on:
+  push:
+    branches:
+      - 'main'
+
+  workflow_dispatch:
+
+jobs:
+  cd-storage:
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 20
+
+    env:
+      AWS_REGION: us-east-1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@13d241b293754004c80624b5567555c4a39ffbe3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy storage stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: storage-deploys-test
+          template: storage-stack.yaml
+         
