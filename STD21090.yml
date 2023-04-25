@@ -1,0 +1,54 @@
+Parameters:
+  Env:
+    Type: String
+  DBName:
+    Type: String
+    Default: pgTestDb
+  DBClass:
+    Default: db.t3.micro
+    Description: Database instance class
+    Type: String
+    ConstraintDescription: must select a valid database instance type.
+  DBAllocatedStorage:
+    Type: Number
+    Default: '5'
+  SecurityGroup:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: '/TestSSM/sg'
+    
+Resources:
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Retain
+    Properties:
+      DBName: !Ref DBName
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass:
+        Ref: DBClass
+      Engine: postgres
+      MasterUsername: !Sub '{{resolve:ssm:/TestSSM/db/username}}'
+      MasterUserPassword: !Sub '{{resolve:ssm:/TestSSM/db/password}}'
+      VPCSecurityGroups: 
+        - !Ref SecurityGroup
+  DatabaseSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: 'TestSSM'
+      Type: String
+      Value:
+        Fn::Join:
+          - ''
+          - - jdbc:postgresql://
+            - Fn::GetAtt:
+                - Database
+                - Endpoint.Address
+            - ':'
+            - Fn::GetAtt:
+                - Database
+                - Endpoint.Port
+            - '/'
+            - !Ref DBName
+
+Outputs:
+  DatabaseSSM:
+    Value: !Ref DatabaseSSM
