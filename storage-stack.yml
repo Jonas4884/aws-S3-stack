@@ -1,17 +1,54 @@
+Parameters:
+  Env:
+    Type: String
+  DBName:
+    Type: String
+    Default: pgTestDb
+  DBClass:
+    Default: db.t3.micro
+    Description: Database instance class
+    Type: String
+    ConstraintDescription: must select a valid database instance type.
+  DBAllocatedStorage:
+    Type: Number
+    Default: '5'
+  SecurityGroup:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: '/TestSSM/sg'
+    
 Resources:
-  MyBucket:
-    Type: AWS::S3::Bucket
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Retain
     Properties:
-      BucketName: "STD21090"
-  MyBucketNameParam:
-    Type: "AWS::SSM::Parameter"
+      DBName: !Ref DBName
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass:
+        Ref: DBClass
+      Engine: postgres
+      MasterUsername: !Sub '{{resolve:ssm:/TestSSM/db/username}}'
+      MasterUserPassword: !Sub '{{resolve:ssm:/TestSSM/db/password}}'
+      VPCSecurityGroups: 
+        - !Ref SecurityGroup
+  DatabaseSSM:
+    Type: AWS::SSM::Parameter
     Properties:
-      Type: "String"
-      Name: "/my-bucket/name"
-      Value: !Ref MyBucket
-  MyBucketArnParam:
-    Type: "AWS::SSM::Parameter"
-    Properties:
-      Type: "String"
-      Name: "/my-bucket/arn"
-      Value: !GetAtt MyBucket.Arn
+      Name: 'TestSSM'
+      Type: String
+      Value:
+        Fn::Join:
+          - ''
+          - - jdbc:postgresql://
+            - Fn::GetAtt:
+                - Database
+                - Endpoint.Address
+            - ':'
+            - Fn::GetAtt:
+                - Database
+                - Endpoint.Port
+            - '/'
+            - !Ref DBName
+
+Outputs:
+  DatabaseSSM:
+    Value: !Ref DatabaseSSM
